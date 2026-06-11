@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
 
 function Navbar() {
   const { setToken } = useContext(AuthContext);
@@ -23,6 +24,13 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    toast.success("Logged out successfully!", {
+      style: {
+        background: "#0f172a",
+        color: "#f1f5f9",
+        border: "1px solid #1e293b",
+      },
+    });
     navigate("/login");
   };
 

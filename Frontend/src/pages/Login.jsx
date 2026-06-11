@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";  
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -11,7 +11,7 @@ function Login() {
   const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {

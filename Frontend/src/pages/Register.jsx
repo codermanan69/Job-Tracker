@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-hot-toast";
+import { AuthContext } from "../context/AuthContext";
 
 function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { setToken } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +23,9 @@ function Register() {
 
       console.log(response.data);
 
+      localStorage.setItem("token", response.data.token);
+      setToken(response.data.token);
+
       toast.success("Registration successful!", {
         style: {
           background: "#0f172a",
@@ -27,6 +33,8 @@ function Register() {
           border: "1px solid #1e293b",
         },
       });
+
+      navigate("/dashboard");
     } catch (error) {
       console.log(error.response?.data);
       toast.error("Registration Failed", {
