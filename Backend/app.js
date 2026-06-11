@@ -23,7 +23,7 @@ app.get("/protected", authMiddleware, (req, res) => {
     user: req.user,
   });
 });
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "index.html")
   );
