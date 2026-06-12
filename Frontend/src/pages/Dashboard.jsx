@@ -24,6 +24,7 @@ function Dashboard() {
   };
 
   useEffect(() => {
+    document.title = "Job Tracker | Dashboard";
     fetchApplications();
   }, []);
 

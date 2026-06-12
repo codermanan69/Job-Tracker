@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-hot-toast";
@@ -10,6 +10,10 @@ function Register() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
+
+  useEffect(() => {
+    document.title = "Job Tracker | Register";
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,7 +192,7 @@ function Register() {
               to="/login"
               className="text-indigo-400 hover:text-indigo-300 hover:underline font-semibold"
             >
-              Log in
+              Login
             </Link>
           </p>
         </div>
