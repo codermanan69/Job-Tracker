@@ -44,7 +44,7 @@ function ApplicationCard({ app, onDelete, onEdit }) {
 
         {/* Notes (rendered conditionally if present) */}
         {app.notes && app.notes.trim() !== "" && (
-          <div className="bg-slate-50 dark:bg-slate-950 border-l-2 border-indigo-500/80 p-2.5 rounded-lg text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-3 break-all max-h-24 overflow-y-auto">
+          <div className="bg-slate-50 dark:bg-slate-950 border-l-2 border-indigo-500/80 p-2.5 rounded-lg text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-3 break-all max-h-24 overflow-y-auto notes-scrollbar">
             {app.notes}
           </div>
         )}

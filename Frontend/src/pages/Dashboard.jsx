@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import ApplicationCard from "../components/ApplicationCard";
 import ApplicationForm from "../components/ApplicationForm";
 import Navbar from "../components/Navbar";
-import API from "../services/api";
+import { getApplications, deleteApplication } from "../services/applicationService";
+import { AuthContext } from "../context/AuthContext";
 import EditApplicationModal from "../components/EditApplicationModal";
 import { toast } from "react-hot-toast";
 
 function Dashboard() {
+  const { isGuest } = useContext(AuthContext);
   const [applications, setApplications] = useState([]);
   const [editingApp, setEditingApp] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,7 +18,7 @@ function Dashboard() {
 
   const fetchApplications = async () => {
     try {
-      const response = await API.get("/applications");
+      const response = await getApplications(isGuest);
       setApplications(response.data);
     } catch (error) {
       console.log(error);
@@ -30,7 +32,7 @@ function Dashboard() {
 
   const handleDelete = async (id) => {
     try {
-      await API.delete(`/applications/${id}`);
+      await deleteApplication(id, isGuest);
 
       toast.success("Application deleted successfully!", {
         style: {
@@ -201,6 +203,13 @@ function Dashboard() {
     return 0;
   });
 
+  const columns = [
+    { title: "Applied", status: "Applied", color: "border-t-blue-500", badgeBg: "bg-blue-500/10 text-blue-500" },
+    { title: "Interview", status: "Interview", color: "border-t-amber-500", badgeBg: "bg-amber-500/10 text-amber-500" },
+    { title: "Offer", status: "Offer", color: "border-t-emerald-500", badgeBg: "bg-emerald-500/10 text-emerald-500" },
+    { title: "Rejected", status: "Rejected", color: "border-t-rose-500", badgeBg: "bg-rose-500/10 text-rose-500" },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
       
@@ -292,7 +301,221 @@ function Dashboard() {
             </svg>
           </div>
         </div>
-        
+               {/* Dashboard 2-Column Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
+          
+          {/* Left Panel: Form Card */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24">
+            <ApplicationForm onApplicationAdded={fetchApplications} />
+          </div>
+
+          {/* Right Panel: Applications list */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                  Applications
+                </h2>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-full shadow-2xs">
+                  Active Listings: {applications.length}
+                </span>
+              </div>
+
+              {/* Modern Search, Status Filter, and Sorting inputs */}
+              <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                <div className="relative flex-grow">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search company or role..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                  {/* Status Filter */}
+                  <div className="relative min-w-[140px]">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full pl-4 pr-10 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer appearance-none"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Applied">Applied</option>
+                      <option value="Interview">Interview</option>
+                      <option value="Offer">Offer</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-450 dark:text-slate-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Premium Glassmorphic Sorting Dropdown */}
+                  <div className="relative min-w-[150px]">
+                    <button
+                      type="button"
+                      onClick={() => setIsSortOpen(!isSortOpen)}
+                      className="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer shadow-3xs hover:bg-white/60 dark:hover:bg-slate-900/60"
+                    >
+                      <span className="truncate">Sort By: {
+                        sortBy === "newest" ? "Newest First" :
+                        sortBy === "oldest" ? "Oldest First" :
+                        sortBy === "company-az" ? "Company A-Z" :
+                        sortBy === "company-za" ? "Company Z-A" : "Newest First"
+                      }</span>
+                      <svg className={`w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${isSortOpen ? 'rotate-185' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    {isSortOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)}></div>
+                        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border border-slate-200 dark:border-slate-800 p-1.5 shadow-xl z-50 animate-in fade-in slide-in-from-top-1 duration-200">
+                          <button
+                            type="button"
+                            onClick={() => { setSortBy("newest"); setIsSortOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
+                              sortBy === "newest"
+                                ? "bg-indigo-500 text-white shadow-xs"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            Newest First
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
+                              sortBy === "oldest"
+                                ? "bg-indigo-500 text-white shadow-xs"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            Oldest First
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setSortBy("company-az"); setIsSortOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
+                              sortBy === "company-az"
+                                ? "bg-indigo-500 text-white shadow-xs"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            Company A-Z
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setSortBy("company-za"); setIsSortOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
+                              sortBy === "company-za"
+                                ? "bg-indigo-500 text-white shadow-xs"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            Company Z-A
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {applications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-md">
+                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl mb-4 border border-slate-100 dark:border-slate-800/60">
+                  <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
+                  No application cards yet
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mt-1">
+                  Add your first job application using the form on the left to start compiling your board.
+                </p>
+              </div>
+            ) : sortedApplications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-md">
+                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl mb-4 border border-slate-100 dark:border-slate-800/60">
+                  <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
+                  No matching results
+                </h3>
+                <p className="text-slate-550 dark:text-slate-400 text-sm max-w-sm mt-1">
+                  We couldn't find any job applications matching your query or status filter.
+                </p>
+              </div>
+            ) : (
+              /* The Kanban Board Layout */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start w-full">
+                {columns.map((column) => {
+                  const columnApps = sortedApplications.filter(
+                    (app) => {
+                      if (column.status === "Applied" && app.status === "OA") return true;
+                      return app.status === column.status;
+                    }
+                  );
+
+                  return (
+                    <div 
+                      key={column.status}
+                      className={`flex flex-col gap-3 bg-slate-100/40 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-3 border-t-4 ${column.color} shadow-xs min-h-[350px] transition-all`}
+                    >
+                      {/* Column Header */}
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-800/50">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                          {column.title}
+                        </span>
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${column.badgeBg}`}>
+                          {columnApps.length}
+                        </span>
+                      </div>
+
+                      {/* Column Body - cards list */}
+                      <div className="flex flex-col gap-3 overflow-y-auto max-h-[500px] pr-0.5">
+                        {columnApps.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 px-4 bg-white/20 dark:bg-slate-950/20 border border-dashed border-slate-200 dark:border-slate-800/40 rounded-xl text-center text-slate-400 dark:text-slate-650 min-h-[100px] select-none">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider">No Items</span>
+                          </div>
+                        ) : (
+                          columnApps.map((app) => (
+                            <div
+                              key={app._id}
+                              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 shadow-3xs hover:shadow-md hover:-translate-y-0.5 hover:scale-[1.01] hover:border-indigo-500/20 dark:hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between w-full"
+                            >
+                              <ApplicationCard
+                                app={app}
+                                onDelete={handleDelete}
+                                onEdit={() => setEditingApp(app)}
+                              />
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+        </div>
+
         {/* Page title and state indicators */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
@@ -633,173 +856,6 @@ function Dashboard() {
                 </React.Fragment>
               ))}
             </div>
-          </div>
-
-        </div>
-
-        {/* Dashboard 2-Column Split Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Panel: Form Card */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24">
-            <ApplicationForm onApplicationAdded={fetchApplications} />
-          </div>
-
-          {/* Right Panel: Applications list */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                  Applications
-                </h2>
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-full shadow-2xs">
-                  Active Listings: {applications.length}
-                </span>
-              </div>
-
-              {/* Modern Search, Status Filter, and Sorting inputs */}
-              <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-                <div className="relative flex-grow">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search company or role..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                  {/* Status Filter */}
-                  <div className="relative min-w-[140px]">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full pl-4 pr-10 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer appearance-none"
-                    >
-                      <option value="All">All Statuses</option>
-                      <option value="Applied">Applied</option>
-                      <option value="Interview">Interview</option>
-                      <option value="Offer">Offer</option>
-                      <option value="Rejected">Rejected</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-450 dark:text-slate-500">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Premium Glassmorphic Sorting Dropdown */}
-                  <div className="relative min-w-[150px]">
-                    <button
-                      type="button"
-                      onClick={() => setIsSortOpen(!isSortOpen)}
-                      className="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-2.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 text-sm focus:border-indigo-500 dark:focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer shadow-3xs hover:bg-white/60 dark:hover:bg-slate-900/60"
-                    >
-                      <span className="truncate">Sort By: {
-                        sortBy === "newest" ? "Newest First" :
-                        sortBy === "oldest" ? "Oldest First" :
-                        sortBy === "company-az" ? "Company A-Z" :
-                        sortBy === "company-za" ? "Company Z-A" : "Newest First"
-                      }</span>
-                      <svg className={`w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${isSortOpen ? 'rotate-185' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </button>
-                    {isSortOpen && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)}></div>
-                        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border border-slate-200 dark:border-slate-800 p-1.5 shadow-xl z-50 animate-in fade-in slide-in-from-top-1 duration-200">
-                          <button
-                            type="button"
-                            onClick={() => { setSortBy("newest"); setIsSortOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
-                              sortBy === "newest"
-                                ? "bg-indigo-500 text-white shadow-xs"
-                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
-                            }`}
-                          >
-                            Newest First
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
-                              sortBy === "oldest"
-                                ? "bg-indigo-500 text-white shadow-xs"
-                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
-                            }`}
-                          >
-                            Oldest First
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setSortBy("company-az"); setIsSortOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
-                              sortBy === "company-az"
-                                ? "bg-indigo-500 text-white shadow-xs"
-                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
-                            }`}
-                          >
-                            Company A-Z
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setSortBy("company-za"); setIsSortOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
-                              sortBy === "company-za"
-                                ? "bg-indigo-500 text-white shadow-xs"
-                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
-                            }`}
-                          >
-                            Company Z-A
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {sortedApplications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-md">
-                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl mb-4 border border-slate-100 dark:border-slate-800/60">
-                  <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                  </svg>
-                </div>
-                <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
-                  {applications.length === 0 ? "No application cards yet" : "No matching results"}
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mt-1">
-                  {applications.length === 0 
-                    ? "Add your first job application using the form on the left to start compiling your board."
-                    : "We couldn't find any job applications matching your query or status filter."}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {sortedApplications.map((app) => (
-                  <div 
-                    key={app._id} 
-                    className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs hover:shadow-md hover:-translate-y-1 hover:scale-[1.01] hover:border-indigo-500/20 dark:hover:border-indigo-500/30 transition-all duration-300 min-h-[190px] flex flex-col justify-between w-full"
-                  >
-                    <ApplicationCard 
-                      app={app} 
-                      onDelete={handleDelete} 
-                      onEdit={() => setEditingApp(app)} 
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
         </div>

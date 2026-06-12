@@ -9,7 +9,19 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { setToken } = useContext(AuthContext);
+  const { setToken, setIsGuest } = useContext(AuthContext);
+
+  const handleContinueAsGuest = () => {
+    setIsGuest(true);
+    toast.success("Welcome! Entered Guest Mode.", {
+      style: {
+        background: "#0f172a",
+        color: "#f1f5f9",
+        border: "1px solid #1e293b",
+      },
+    });
+    navigate("/dashboard");
+  };
 
   useEffect(() => {
     document.title = "Job Tracker | Login";
@@ -173,6 +185,14 @@ const handleSubmit = async (e) => {
             Login
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={handleContinueAsGuest}
+          className="w-full py-2.5 mt-3 border border-dashed border-indigo-500/30 dark:border-indigo-500/20 hover:border-indigo-500 bg-transparent text-indigo-400 hover:text-indigo-300 font-extrabold uppercase tracking-wider text-[10px] rounded-xl transition-all duration-300 hover:-translate-y-0.5 active:scale-97 cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          Continue as Guest
+        </button>
 
         <div className="mt-5 pt-4 border-t border-slate-800/60 text-center">
           <p className="text-slate-400 text-[11px] font-medium">

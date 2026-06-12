@@ -1,8 +1,10 @@
-import { useState } from "react";
-import API from "../services/api";
+import { useState, useContext } from "react";
+import { createApplication } from "../services/applicationService";
+import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 function ApplicationForm({ onApplicationAdded }) {
+  const { isGuest } = useContext(AuthContext);
   const [companyName, setCompanyName] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Applied");
@@ -15,12 +17,12 @@ function ApplicationForm({ onApplicationAdded }) {
 
     setLoading(true);
     try {
-      const response = await API.post("/applications", {
+      const response = await createApplication({
         companyName,
         role,
         status,
         notes,
-      });
+      }, isGuest);
 
       console.log(response.data);
       console.log("Application Added");

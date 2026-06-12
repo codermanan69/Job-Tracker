@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 function Navbar() {
-  const { setToken } = useContext(AuthContext);
+  const { setToken, isGuest, setIsGuest } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Initialize theme from localStorage (defaulting to dark as requested)
@@ -23,7 +23,9 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("isGuest");
     setToken(null);
+    setIsGuest(false);
     toast.success("Logged out successfully!", {
       style: {
         background: "#0f172a",
@@ -55,6 +57,12 @@ function Navbar() {
       </h2>
 
       <div className="flex items-center gap-4">
+        {isGuest && (
+          <span className="text-xs font-semibold px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            Guest Mode
+          </span>
+        )}
+
         {/* Modern Theme Toggle Switch */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

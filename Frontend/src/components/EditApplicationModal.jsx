@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState, useEffect, useContext } from "react";
+import { updateApplication } from "../services/applicationService";
+import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 function EditApplicationModal({ app, onClose, onSave }) {
+  const { isGuest } = useContext(AuthContext);
   const [companyName, setCompanyName] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Applied");
@@ -32,12 +34,12 @@ function EditApplicationModal({ app, onClose, onSave }) {
     setError("");
 
     try {
-      await API.patch(`/applications/${app._id}`, {
+      await updateApplication(app._id, {
         companyName: companyName.trim(),
         role: role.trim(),
         status,
         notes: notes.trim(),
-      });
+      }, isGuest);
 
       toast.success("Application updated successfully!", {
         style: {
